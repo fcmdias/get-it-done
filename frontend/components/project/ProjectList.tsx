@@ -1,12 +1,16 @@
-import { View, Text, TextInput, Button, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { useState, useMemo } from 'react';
+import { View, Text, TextInput, Button, FlatList, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState, useMemo, useRef } from 'react';
 import Slider from '@react-native-community/slider';
 import { Project } from './types';
+import { BottomMenu } from '../common/BottomMenu';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../theme/ThemeContext';
 
 type FilterStatus = 'all' | 'active' | 'paused';
 
 interface ProjectListProps {
   onSelectProject: (project: Project) => void;
+  onSettingsPress: () => void;
 }
 
 const DEFAULT_PROJECTS: Project[] = [
@@ -36,7 +40,9 @@ const DEFAULT_PROJECTS: Project[] = [
   }
 ];
 
-export const ProjectList = ({ onSelectProject }: ProjectListProps) => {
+export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListProps) => {
+  const { theme } = useTheme();
+  const inputRef = useRef<TextInput>(null);
   const [projects, setProjects] = useState<Project[]>(DEFAULT_PROJECTS);
   const [newProject, setNewProject] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('active');
@@ -54,7 +60,12 @@ export const ProjectList = ({ onSelectProject }: ProjectListProps) => {
       };
       setProjects([...projects, project]);
       setNewProject('');
+      inputRef.current?.blur();
     }
+  };
+
+  const handleSubmitEditing = () => {
+    addProject();
   };
 
   const toggleProjectStatus = (id: string) => {
@@ -76,10 +87,9 @@ export const ProjectList = ({ onSelectProject }: ProjectListProps) => {
   const renderLevelControl = (
     value: number,
     onUpdate: (newValue: number) => void,
-    color: string
   ) => (
     <View style={styles.levelControl}>
-      <Text style={styles.levelValue}>{value}</Text>
+      <Text style={[styles.levelValue, { color: theme.text }]}>{value}</Text>
       <Slider
         style={styles.slider}
         minimumValue={1}
@@ -87,9 +97,9 @@ export const ProjectList = ({ onSelectProject }: ProjectListProps) => {
         step={1}
         value={value}
         onValueChange={onUpdate}
-        minimumTrackTintColor={color}
-        maximumTrackTintColor="#D1D1D1"
-        thumbTintColor={color}
+        minimumTrackTintColor={theme.primary}
+        maximumTrackTintColor={theme.disabled}
+        thumbTintColor={theme.primary}
       />
     </View>
   );
@@ -111,66 +121,71 @@ export const ProjectList = ({ onSelectProject }: ProjectListProps) => {
   }, [projects, filterStatus, sortByPriority]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>ALIV Projects</Text>
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: theme.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <Text style={[styles.title, { color: theme.text }]}>ALIV Projects</Text>
       
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={newProject}
-          onChangeText={setNewProject}
-          placeholder="Enter project name"
-        />
-        <Button title="Add Project" onPress={addProject} />
-      </View>
-
       <View style={styles.filterContainer}>
         <View style={styles.filterButtons}>
           <TouchableOpacity
             style={[
               styles.filterButton,
-              filterStatus === 'all' && styles.filterButtonActive
+              { borderColor: theme.border },
+              filterStatus === 'all' && { borderColor: theme.primary }
             ]}
             onPress={() => setFilterStatus('all')}
           >
             <Text style={[
               styles.filterButtonText,
-              filterStatus === 'all' && styles.filterButtonTextActive
+              { color: theme.text },
+              filterStatus === 'all' && { color: theme.primary }
             ]}>All</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.filterButton,
-              filterStatus === 'active' && styles.filterButtonActive
+              { borderColor: theme.border },
+              filterStatus === 'active' && { borderColor: theme.primary }
             ]}
             onPress={() => setFilterStatus('active')}
           >
             <Text style={[
               styles.filterButtonText,
-              filterStatus === 'active' && styles.filterButtonTextActive
+              { color: theme.text },
+              filterStatus === 'active' && { color: theme.primary }
             ]}>Active</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.filterButton,
-              filterStatus === 'paused' && styles.filterButtonActive
+              { borderColor: theme.border },
+              filterStatus === 'paused' && { borderColor: theme.primary }
             ]}
             onPress={() => setFilterStatus('paused')}
           >
             <Text style={[
               styles.filterButtonText,
-              filterStatus === 'paused' && styles.filterButtonTextActive
+              { color: theme.text },
+              filterStatus === 'paused' && { color: theme.primary }
             ]}>Paused</Text>
           </TouchableOpacity>
         </View>
         
         <TouchableOpacity
-          style={[styles.sortButton, sortByPriority && styles.sortButtonActive]}
+          style={[
+            styles.sortButton,
+            { borderColor: theme.border },
+            sortByPriority && { borderColor: theme.primary }
+          ]}
           onPress={() => setSortByPriority(!sortByPriority)}
         >
           <Text style={[
             styles.sortButtonText,
-            sortByPriority && styles.sortButtonTextActive
+            { color: theme.text },
+            sortByPriority && { color: theme.primary }
           ]}>Sort by Priority</Text>
         </TouchableOpacity>
       </View>
@@ -180,17 +195,27 @@ export const ProjectList = ({ onSelectProject }: ProjectListProps) => {
         data={filteredAndSortedProjects}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => onSelectProject(item)}>
-            <View style={styles.projectItem}>
+            <View style={[styles.projectItem, { 
+              backgroundColor: theme.card,
+              borderBottomColor: theme.border,
+              shadowColor: theme.text,
+              elevation: 3,
+              marginHorizontal: 10,
+              marginVertical: 5,
+              borderRadius: 8,
+            }]}>
               <View style={styles.projectHeader}>
-                <Text style={styles.projectName}>{item.name}</Text>
+                <Text style={[styles.projectName, { color: theme.text }]}>{item.name}</Text>
                 <TouchableOpacity
                   onPress={(e) => {
                     e.stopPropagation();
                     toggleProjectStatus(item.id);
                   }}
-                  style={[styles.statusButton, { backgroundColor: item.isActive ? '#4CAF50' : '#FF5722' }]}
+                  style={[styles.statusButton, { 
+                    backgroundColor: item.isActive ? theme.success : theme.danger 
+                  }]}
                 >
-                  <Text style={styles.statusButtonText}>
+                  <Text style={[styles.statusButtonText, { color: theme.background }]}>
                     {item.isActive ? '▶' : '⏸'}
                   </Text>
                 </TouchableOpacity>
@@ -198,29 +223,26 @@ export const ProjectList = ({ onSelectProject }: ProjectListProps) => {
               
               <View style={styles.metadataContainer}>
                 <View style={styles.metadataItem}>
-                  <Text style={styles.label}>Progress</Text>
+                  <Text style={[styles.label, { color: theme.secondary }]}>Progress</Text>
                   {renderLevelControl(
                     item.progress,
-                    (value) => updateLevel(item.id, 'progress', value),
-                    '#2196F3'
+                    (value) => updateLevel(item.id, 'progress', value)
                   )}
                 </View>
                 
                 <View style={styles.metadataItem}>
-                  <Text style={styles.label}>Motivation</Text>
+                  <Text style={[styles.label, { color: theme.secondary }]}>Motivation</Text>
                   {renderLevelControl(
                     item.motivation,
-                    (value) => updateLevel(item.id, 'motivation', value),
-                    '#4CAF50'
+                    (value) => updateLevel(item.id, 'motivation', value)
                   )}
                 </View>
                 
                 <View style={styles.metadataItem}>
-                  <Text style={styles.label}>Priority</Text>
+                  <Text style={[styles.label, { color: theme.secondary }]}>Priority</Text>
                   {renderLevelControl(
                     item.priority,
-                    (value) => updateLevel(item.id, 'priority', value),
-                    '#FF9800'
+                    (value) => updateLevel(item.id, 'priority', value)
                   )}
                 </View>
               </View>
@@ -229,7 +251,43 @@ export const ProjectList = ({ onSelectProject }: ProjectListProps) => {
         )}
         keyExtractor={(item) => item.id}
       />
-    </View>
+
+      <BottomMenu
+        showInput
+        onSettingsPress={onSettingsPress}
+        inputComponent={
+          <View style={[styles.inputContainer, {
+            borderTopColor: theme.border,
+            borderBottomColor: theme.border,
+            backgroundColor: theme.background
+          }]}>
+            <TextInput
+              ref={inputRef}
+              style={[styles.input, {
+                backgroundColor: theme.inputBackground,
+                borderColor: theme.border,
+                color: theme.text,
+                fontSize: 16,
+              }]}
+              value={newProject}
+              onChangeText={setNewProject}
+              placeholder="Enter project name"
+              placeholderTextColor={theme.placeholder}
+              onSubmitEditing={handleSubmitEditing}
+              returnKeyType="done"
+            />
+            <TouchableOpacity 
+              onPress={addProject} 
+              style={[styles.addButton, {
+                backgroundColor: 'transparent'
+              }]}
+            >
+              <Ionicons name="add-circle-outline" size={28} color={theme.primary} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
+    </KeyboardAvoidingView>
   );
 };
 
@@ -243,33 +301,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  input: {
-    flex: 1,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+    paddingHorizontal: 10,
   },
   filterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    paddingHorizontal: 10,
   },
   filterButtons: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
   },
   filterButton: {
     padding: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 5,
+    marginRight: 5,
   },
   filterButtonActive: {
     borderColor: '#2196F3',
@@ -283,7 +333,6 @@ const styles = StyleSheet.create({
   sortButton: {
     padding: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 5,
   },
   sortButtonActive: {
@@ -296,9 +345,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   projectItem: {
-    padding: 10,
+    padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   projectHeader: {
     flexDirection: 'row',
@@ -319,6 +373,9 @@ const styles = StyleSheet.create({
   },
   metadataContainer: {
     flexDirection: 'row',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
   },
   metadataItem: {
     flex: 1,
@@ -339,5 +396,25 @@ const styles = StyleSheet.create({
   slider: {
     width: '100%',
     height: 40,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+  },
+  input: {
+    flex: 1,
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 5,
+    marginRight: 10,
+    fontSize: 16,
+  },
+  addButton: {
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }); 

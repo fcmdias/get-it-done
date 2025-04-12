@@ -1,6 +1,9 @@
-import { View, Text, StyleSheet, FlatList, TextInput, Button, TouchableOpacity, Animated, PanResponder, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, Button, TouchableOpacity, Animated, PanResponder, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useMemo, useRef } from 'react';
 import Slider from '@react-native-community/slider';
+import { BottomMenu } from '../common/BottomMenu';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../theme/ThemeContext';
 
 interface Task {
   id: string;
@@ -16,6 +19,8 @@ interface TaskListProps {
   projectId: string;
   projectName: string;
   onBack: () => void;
+  onSettingsPress: () => void;
+  onHomePress: () => void;
 }
 
 interface TaskWithAnimation extends Task {
@@ -59,11 +64,13 @@ const getDefaultTasks = (projectId: string): TaskWithAnimation[] => [
   }
 ];
 
-export default function TaskList({ projectId, projectName, onBack }: TaskListProps) {
+export default function TaskList({ projectId, projectName, onBack, onSettingsPress, onHomePress }: TaskListProps) {
+  const { theme } = useTheme();
   const [tasks, setTasks] = useState<TaskWithAnimation[]>(() => getDefaultTasks(projectId));
   const [newTask, setNewTask] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const taskAnimations = useRef<{ [key: string]: Animated.Value }>({}).current;
+  const inputRef = useRef<TextInput>(null);
 
   const addTask = () => {
     if (newTask.trim()) {
@@ -77,6 +84,7 @@ export default function TaskList({ projectId, projectName, onBack }: TaskListPro
       };
       setTasks([...tasks, task]);
       setNewTask('');
+      inputRef.current?.blur();
     }
   };
 
@@ -210,7 +218,10 @@ export default function TaskList({ projectId, projectName, onBack }: TaskListPro
           <TouchableOpacity 
             onPress={() => setSelectedTaskId(selectedTaskId === item.id ? null : item.id)}
           >
-            <View style={styles.taskItem}>
+            <View style={[styles.taskItem, { 
+              backgroundColor: theme.card,
+              borderColor: theme.border
+            }]}>
               <View style={styles.taskHeader}>
                 <TouchableOpacity
                   style={styles.checkboxContainer}
@@ -219,11 +230,14 @@ export default function TaskList({ projectId, projectName, onBack }: TaskListPro
                     toggleTask(item.id);
                   }}
                 >
-                  <Text style={styles.checkbox}>{item.completed ? '✓' : '○'}</Text>
+                  <Text style={[styles.checkbox, { color: theme.success }]}>
+                    {item.completed ? '✓' : '○'}
+                  </Text>
                 </TouchableOpacity>
                 <Text style={[
                   styles.taskName,
-                  item.completed && styles.taskCompleted
+                  { color: theme.text },
+                  item.completed && { color: theme.secondary }
                 ]}>{item.name}</Text>
                 {!item.completed && (
                   <Text style={[styles.priorityBadge, { backgroundColor: getPriorityColor(item.priority) }]}>
@@ -285,37 +299,33 @@ export default function TaskList({ projectId, projectName, onBack }: TaskListPro
           style={[
             styles.swipeHandle,
             {
+              backgroundColor: theme.card,
               transform: [{
                 translateX: taskAnimations[item.id] || new Animated.Value(0)
               }]
             }
           ]}
         >
-          <View style={styles.handleBar} />
-          <View style={styles.handleBar} />
-          <View style={styles.handleBar} />
+          <View style={[styles.handleBar, { backgroundColor: theme.secondary }]} />
+          <View style={[styles.handleBar, { backgroundColor: theme.secondary }]} />
+          <View style={[styles.handleBar, { backgroundColor: theme.secondary }]} />
         </Animated.View>
       </View>
     );
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>{projectName} Tasks</Text>
-      </View>
+  const handleSubmitEditing = () => {
+    addTask();
+  };
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={newTask}
-          onChangeText={setNewTask}
-          placeholder="Enter new task"
-        />
-        <Button title="Add Task" onPress={addTask} />
+  return (
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: theme.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: theme.text }]}>{projectName} Tasks</Text>
       </View>
 
       <FlatList
@@ -324,7 +334,38 @@ export default function TaskList({ projectId, projectName, onBack }: TaskListPro
         renderItem={renderTask}
         keyExtractor={(item) => item.id}
       />
-    </View>
+
+      <BottomMenu
+        showInput
+        onSettingsPress={onSettingsPress}
+        onHomePress={onHomePress}
+        inputComponent={
+          <View style={[styles.inputContainer, {
+            borderBottomColor: theme.border,
+            backgroundColor: theme.background
+          }]}>
+            <TextInput
+              ref={inputRef}
+              style={[styles.input, {
+                backgroundColor: theme.inputBackground,
+                borderColor: theme.border,
+                color: theme.text,
+                fontSize: 16,
+              }]}
+              value={newTask}
+              onChangeText={setNewTask}
+              placeholder="Enter new task"
+              placeholderTextColor={theme.placeholder}
+              onSubmitEditing={handleSubmitEditing}
+              returnKeyType="done"
+            />
+            <TouchableOpacity onPress={addTask} style={styles.addButton}>
+              <Ionicons name="add-circle-outline" size={28} color={theme.primary} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
+    </KeyboardAvoidingView>
   );
 }
 
@@ -346,34 +387,31 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 20,
-  },
-  backButton: {
-    marginRight: 15,
-  },
-  backButtonText: {
-    fontSize: 18,
-    color: '#2196F3',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
   },
+  bottomContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+    backgroundColor: '#fff',
+  },
   inputContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
     padding: 10,
-    marginRight: 10,
+    borderWidth: 1,
     borderRadius: 5,
+    marginRight: 10,
+    fontSize: 16,
   },
   list: {
     flex: 1,
@@ -476,7 +514,6 @@ const styles = StyleSheet.create({
   swipeHandle: {
     width: 80,
     height: '100%',
-    backgroundColor: '#e0e0e0',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -487,8 +524,18 @@ const styles = StyleSheet.create({
   handleBar: {
     width: 4,
     height: 4,
-    backgroundColor: '#666',
     marginVertical: 2,
     borderRadius: 2,
+  },
+  backButton: {
+    padding: 15,
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#2196F3',
+  },
+  addButton: {
+    padding: 10,
   },
 }); 
