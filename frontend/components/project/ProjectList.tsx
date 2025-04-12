@@ -1,10 +1,11 @@
-import { View, Text, TextInput, Button, FlatList, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { useState, useMemo, useRef } from 'react';
-import Slider from '@react-native-community/slider';
+import { View, Text, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState, useMemo } from 'react';
 import { Project } from './types';
 import { BottomMenu } from '../common/BottomMenu';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeContext';
+import { ProjectItem } from './ProjectItem';
+import { CreateProject } from './CreateProject';
+import { FilterButtons } from './FilterButtons';
 
 type FilterStatus = 'all' | 'active' | 'paused';
 
@@ -42,7 +43,6 @@ const DEFAULT_PROJECTS: Project[] = [
 
 export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListProps) => {
   const { theme } = useTheme();
-  const inputRef = useRef<TextInput>(null);
   const [projects, setProjects] = useState<Project[]>(DEFAULT_PROJECTS);
   const [newProject, setNewProject] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('active');
@@ -60,12 +60,7 @@ export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListPro
       };
       setProjects([...projects, project]);
       setNewProject('');
-      inputRef.current?.blur();
     }
-  };
-
-  const handleSubmitEditing = () => {
-    addProject();
   };
 
   const toggleProjectStatus = (id: string) => {
@@ -83,26 +78,6 @@ export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListPro
         : project
     ));
   };
-
-  const renderLevelControl = (
-    value: number,
-    onUpdate: (newValue: number) => void,
-  ) => (
-    <View style={styles.levelControl}>
-      <Text style={[styles.levelValue, { color: theme.text }]}>{value}</Text>
-      <Slider
-        style={styles.slider}
-        minimumValue={1}
-        maximumValue={5}
-        step={1}
-        value={value}
-        onValueChange={onUpdate}
-        minimumTrackTintColor={theme.primary}
-        maximumTrackTintColor={theme.disabled}
-        thumbTintColor={theme.primary}
-      />
-    </View>
-  );
 
   const filteredAndSortedProjects = useMemo(() => {
     let filtered = [...projects];
@@ -128,126 +103,23 @@ export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListPro
     >
       <Text style={[styles.title, { color: theme.text }]}>ALIV Projects</Text>
       
-      <View style={styles.filterContainer}>
-        <View style={styles.filterButtons}>
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              { borderColor: theme.border },
-              filterStatus === 'all' && { borderColor: theme.primary }
-            ]}
-            onPress={() => setFilterStatus('all')}
-          >
-            <Text style={[
-              styles.filterButtonText,
-              { color: theme.text },
-              filterStatus === 'all' && { color: theme.primary }
-            ]}>All</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              { borderColor: theme.border },
-              filterStatus === 'active' && { borderColor: theme.primary }
-            ]}
-            onPress={() => setFilterStatus('active')}
-          >
-            <Text style={[
-              styles.filterButtonText,
-              { color: theme.text },
-              filterStatus === 'active' && { color: theme.primary }
-            ]}>Active</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              { borderColor: theme.border },
-              filterStatus === 'paused' && { borderColor: theme.primary }
-            ]}
-            onPress={() => setFilterStatus('paused')}
-          >
-            <Text style={[
-              styles.filterButtonText,
-              { color: theme.text },
-              filterStatus === 'paused' && { color: theme.primary }
-            ]}>Paused</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <TouchableOpacity
-          style={[
-            styles.sortButton,
-            { borderColor: theme.border },
-            sortByPriority && { borderColor: theme.primary }
-          ]}
-          onPress={() => setSortByPriority(!sortByPriority)}
-        >
-          <Text style={[
-            styles.sortButtonText,
-            { color: theme.text },
-            sortByPriority && { color: theme.primary }
-          ]}>Sort by Priority</Text>
-        </TouchableOpacity>
-      </View>
+      <FilterButtons
+        filterStatus={filterStatus}
+        onFilterChange={setFilterStatus}
+        sortByPriority={sortByPriority}
+        onSortChange={setSortByPriority}
+      />
 
       <FlatList
         style={styles.list}
         data={filteredAndSortedProjects}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => onSelectProject(item)}>
-            <View style={[styles.projectItem, { 
-              backgroundColor: theme.card,
-              borderBottomColor: theme.border,
-              shadowColor: theme.text,
-              elevation: 3,
-              marginHorizontal: 10,
-              marginVertical: 5,
-              borderRadius: 8,
-            }]}>
-              <View style={styles.projectHeader}>
-                <Text style={[styles.projectName, { color: theme.text }]}>{item.name}</Text>
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    toggleProjectStatus(item.id);
-                  }}
-                  style={[styles.statusButton, { 
-                    backgroundColor: item.isActive ? theme.success : theme.danger 
-                  }]}
-                >
-                  <Text style={[styles.statusButtonText, { color: theme.background }]}>
-                    {item.isActive ? '▶' : '⏸'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.metadataContainer}>
-                <View style={styles.metadataItem}>
-                  <Text style={[styles.label, { color: theme.secondary }]}>Progress</Text>
-                  {renderLevelControl(
-                    item.progress,
-                    (value) => updateLevel(item.id, 'progress', value)
-                  )}
-                </View>
-                
-                <View style={styles.metadataItem}>
-                  <Text style={[styles.label, { color: theme.secondary }]}>Motivation</Text>
-                  {renderLevelControl(
-                    item.motivation,
-                    (value) => updateLevel(item.id, 'motivation', value)
-                  )}
-                </View>
-                
-                <View style={styles.metadataItem}>
-                  <Text style={[styles.label, { color: theme.secondary }]}>Priority</Text>
-                  {renderLevelControl(
-                    item.priority,
-                    (value) => updateLevel(item.id, 'priority', value)
-                  )}
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
+          <ProjectItem
+            project={item}
+            onSelect={onSelectProject}
+            onToggleStatus={toggleProjectStatus}
+            onUpdateLevel={updateLevel}
+          />
         )}
         keyExtractor={(item) => item.id}
       />
@@ -256,35 +128,11 @@ export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListPro
         showInput
         onSettingsPress={onSettingsPress}
         inputComponent={
-          <View style={[styles.inputContainer, {
-            borderTopColor: theme.border,
-            borderBottomColor: theme.border,
-            backgroundColor: theme.background
-          }]}>
-            <TextInput
-              ref={inputRef}
-              style={[styles.input, {
-                backgroundColor: theme.inputBackground,
-                borderColor: theme.border,
-                color: theme.text,
-                fontSize: 16,
-              }]}
-              value={newProject}
-              onChangeText={setNewProject}
-              placeholder="Enter project name"
-              placeholderTextColor={theme.placeholder}
-              onSubmitEditing={handleSubmitEditing}
-              returnKeyType="done"
-            />
-            <TouchableOpacity 
-              onPress={addProject} 
-              style={[styles.addButton, {
-                backgroundColor: 'transparent'
-              }]}
-            >
-              <Ionicons name="add-circle-outline" size={28} color={theme.primary} />
-            </TouchableOpacity>
-          </View>
+          <CreateProject
+            value={newProject}
+            onChange={setNewProject}
+            onSubmit={addProject}
+          />
         }
       />
     </KeyboardAvoidingView>
@@ -303,118 +151,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingHorizontal: 10,
   },
-  filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
-  filterButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 10,
-  },
-  filterButton: {
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 5,
-    marginRight: 5,
-  },
-  filterButtonActive: {
-    borderColor: '#2196F3',
-  },
-  filterButtonText: {
-    fontSize: 16,
-  },
-  filterButtonTextActive: {
-    fontWeight: 'bold',
-  },
-  sortButton: {
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 5,
-  },
-  sortButtonActive: {
-    borderColor: '#2196F3',
-  },
-  sortButtonText: {
-    fontSize: 16,
-  },
   list: {
     flex: 1,
-  },
-  projectItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  projectHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  projectName: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  statusButton: {
-    padding: 5,
-    borderRadius: 5,
-  },
-  statusButtonText: {
-    fontSize: 16,
-  },
-  metadataContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-  },
-  metadataItem: {
-    flex: 1,
-    marginRight: 10,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  levelControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  levelValue: {
-    marginRight: 10,
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-  },
-  input: {
-    flex: 1,
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 5,
-    marginRight: 10,
-    fontSize: 16,
-  },
-  addButton: {
-    padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 }); 
