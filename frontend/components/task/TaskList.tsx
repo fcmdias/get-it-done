@@ -1,19 +1,10 @@
-import { View, Text, StyleSheet, FlatList, TextInput, Button, TouchableOpacity, Animated, PanResponder, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
-import { useState, useMemo, useRef } from 'react';
-import Slider from '@react-native-community/slider';
+import { View, Text, StyleSheet, FlatList, Animated, PanResponder, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { BottomMenu } from '../common/BottomMenu';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
-
-interface Task {
-  id: string;
-  name: string;
-  completed: boolean;
-  progress: number;
-  priority: number;
-  createdOn: Date;
-  completedOn?: Date;
-}
+import { useTasks } from '../../hooks/useTasks';
+import { TaskItem } from './components/TaskItem';
+import { CreateTask } from './components/CreateTask';
+import { TaskWithAnimation } from '../../types/task';
 
 interface TaskListProps {
   projectId: string;
@@ -23,116 +14,9 @@ interface TaskListProps {
   onHomePress: () => void;
 }
 
-interface TaskWithAnimation extends Task {
-  hidden?: boolean;
-  animation?: Animated.Value;
-}
-
-const getDefaultTasks = (projectId: string): TaskWithAnimation[] => [
-  {
-    id: `${projectId}-1`,
-    name: 'Research and Planning',
-    completed: false,
-    progress: 0.6,
-    priority: 5,
-    createdOn: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-  },
-  {
-    id: `${projectId}-2`,
-    name: 'Initial Setup',
-    completed: true,
-    progress: 1,
-    priority: 4,
-    createdOn: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-    completedOn: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-  },
-  {
-    id: `${projectId}-3`,
-    name: 'Implementation',
-    completed: false,
-    progress: 0.3,
-    priority: 3,
-    createdOn: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-  },
-  {
-    id: `${projectId}-4`,
-    name: 'Testing',
-    completed: false,
-    progress: 0,
-    priority: 2,
-    createdOn: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-  }
-];
-
 export default function TaskList({ projectId, projectName, onBack, onSettingsPress, onHomePress }: TaskListProps) {
   const { theme } = useTheme();
-  const [tasks, setTasks] = useState<TaskWithAnimation[]>(() => getDefaultTasks(projectId));
-  const [newTask, setNewTask] = useState('');
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const taskAnimations = useRef<{ [key: string]: Animated.Value }>({}).current;
-  const inputRef = useRef<TextInput>(null);
-
-  const addTask = () => {
-    if (newTask.trim()) {
-      const task: Task = {
-        id: Date.now().toString(),
-        name: newTask.trim(),
-        completed: false,
-        progress: 0,
-        priority: 1,
-        createdOn: new Date(),
-      };
-      setTasks([...tasks, task]);
-      setNewTask('');
-      inputRef.current?.blur();
-    }
-  };
-
-  const toggleTask = (taskId: string) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId
-        ? {
-            ...task,
-            completed: !task.completed,
-            completedOn: !task.completed ? new Date() : undefined,
-            progress: !task.completed ? 1 : task.progress
-          }
-        : task
-    ));
-  };
-
-  const updateTaskProgress = (taskId: string, progress: number) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId
-        ? { ...task, progress }
-        : task
-    ));
-  };
-
-  const updateTaskPriority = (taskId: string, priority: number) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId
-        ? { ...task, priority }
-        : task
-    ));
-  };
-
-  const sortedTasks = useMemo(() => {
-    return [...tasks].sort((a, b) => {
-      if (a.completed !== b.completed) {
-        return a.completed ? 1 : -1;
-      }
-      
-      if (!a.completed && !b.completed) {
-        if (a.priority !== b.priority) {
-          return b.priority - a.priority;
-        }
-        return b.createdOn.getTime() - a.createdOn.getTime();
-      } else {
-        return (b.completedOn?.getTime() || 0) - (a.completedOn?.getTime() || 0);
-      }
-    });
-  }, [tasks]);
+  const { tasks, selectedTaskId, taskAnimations, setSelectedTaskId, addTask, toggleTask, updateTaskProgress, updateTaskPriority } = useTasks(projectId);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
@@ -153,18 +37,10 @@ export default function TaskList({ projectId, projectName, onBack, onSettingsPre
         if (gesture.dx < -screenWidth * 0.2) {
           position.setValue(-screenWidth);
           // Trigger the hide action
-          setTasks(prevTasks => 
-            prevTasks.map(task => 
-              task.id === taskId ? { ...task, hidden: true } : task
-            )
-          );
+          setSelectedTaskId(null);
           
           setTimeout(() => {
-            setTasks(prevTasks => 
-              prevTasks.map(task => 
-                task.id === taskId ? { ...task, hidden: false } : task
-              )
-            );
+            setSelectedTaskId(taskId);
             position.setValue(0);
           }, 10000);
         } else {
@@ -199,123 +75,24 @@ export default function TaskList({ projectId, projectName, onBack, onSettingsPre
   };
 
   const renderTask = ({ item }: { item: TaskWithAnimation }) => {
-    if (item.hidden) return null;
-
     const panResponder = createPanResponder(item.id);
 
     return (
-      <View style={styles.taskWrapper}>
-        <Animated.View 
-          style={[
-            styles.taskContent,
-            {
-              transform: [{
-                translateX: taskAnimations[item.id] || new Animated.Value(0)
-              }]
-            }
-          ]}
-        >
-          <TouchableOpacity 
-            onPress={() => setSelectedTaskId(selectedTaskId === item.id ? null : item.id)}
-          >
-            <View style={[styles.taskItem, { 
-              backgroundColor: theme.card,
-              borderColor: theme.border
-            }]}>
-              <View style={styles.taskHeader}>
-                <TouchableOpacity
-                  style={styles.checkboxContainer}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    toggleTask(item.id);
-                  }}
-                >
-                  <Text style={[styles.checkbox, { color: theme.success }]}>
-                    {item.completed ? '✓' : '○'}
-                  </Text>
-                </TouchableOpacity>
-                <Text style={[
-                  styles.taskName,
-                  { color: theme.text },
-                  item.completed && { color: theme.secondary }
-                ]}>{item.name}</Text>
-                {!item.completed && (
-                  <Text style={[styles.priorityBadge, { backgroundColor: getPriorityColor(item.priority) }]}>
-                    P{item.priority}
-                  </Text>
-                )}
-              </View>
-              
-              {selectedTaskId === item.id && (
-                <View style={styles.taskDetails}>
-                  <Text style={styles.dateLabel}>Created: {formatDate(item.createdOn)}</Text>
-                  {item.completed && item.completedOn && (
-                    <Text style={styles.dateLabel}>Completed: {formatDate(item.completedOn)}</Text>
-                  )}
-                  
-                  {!item.completed && (
-                    <View style={styles.priorityContainer}>
-                      <Text style={styles.label}>Priority:</Text>
-                      <Slider
-                        style={styles.prioritySlider}
-                        minimumValue={1}
-                        maximumValue={5}
-                        step={1}
-                        value={item.priority}
-                        onValueChange={(value) => updateTaskPriority(item.id, value)}
-                        minimumTrackTintColor="#FF9800"
-                        maximumTrackTintColor="#D1D1D1"
-                        thumbTintColor="#FF9800"
-                      />
-                      <Text style={styles.priorityValue}>{item.priority}</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.progressContainer}>
-                    <Text style={styles.progressLabel}>
-                      Progress: {Math.round(item.progress * 100)}%
-                    </Text>
-                    <Slider
-                      style={styles.progressSlider}
-                      minimumValue={0}
-                      maximumValue={1}
-                      step={0.1}
-                      value={item.progress}
-                      onValueChange={(value) => updateTaskProgress(item.id, value)}
-                      minimumTrackTintColor="#4CAF50"
-                      maximumTrackTintColor="#D1D1D1"
-                      thumbTintColor="#4CAF50"
-                      disabled={item.completed}
-                    />
-                  </View>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
-
-        <Animated.View
-          {...panResponder.panHandlers}
-          style={[
-            styles.swipeHandle,
-            {
-              backgroundColor: theme.card,
-              transform: [{
-                translateX: taskAnimations[item.id] || new Animated.Value(0)
-              }]
-            }
-          ]}
-        >
-          <View style={[styles.handleBar, { backgroundColor: theme.secondary }]} />
-          <View style={[styles.handleBar, { backgroundColor: theme.secondary }]} />
-          <View style={[styles.handleBar, { backgroundColor: theme.secondary }]} />
-        </Animated.View>
-      </View>
+      <TaskItem
+        task={item}
+        panResponder={panResponder}
+        selectedTaskId={selectedTaskId}
+        setSelectedTaskId={setSelectedTaskId}
+        toggleTask={toggleTask}
+        updateTaskProgress={updateTaskProgress}
+        updateTaskPriority={updateTaskPriority}
+        formatDate={formatDate}
+      />
     );
   };
 
-  const handleSubmitEditing = () => {
-    addTask();
+  const handleSubmitEditing = (name: string) => {
+    addTask(name);
   };
 
   return (
@@ -330,7 +107,7 @@ export default function TaskList({ projectId, projectName, onBack, onSettingsPre
 
       <FlatList
         style={styles.list}
-        data={sortedTasks}
+        data={tasks}
         renderItem={renderTask}
         keyExtractor={(item) => item.id}
       />
@@ -340,51 +117,19 @@ export default function TaskList({ projectId, projectName, onBack, onSettingsPre
         onSettingsPress={onSettingsPress}
         onHomePress={onHomePress}
         inputComponent={
-          <View style={[styles.inputContainer, {
-            borderBottomColor: theme.border,
-            backgroundColor: theme.background
-          }]}>
-            <TextInput
-              ref={inputRef}
-              style={[styles.input, {
-                backgroundColor: theme.inputBackground,
-                borderColor: theme.border,
-                color: theme.text,
-                fontSize: 16,
-              }]}
-              value={newTask}
-              onChangeText={setNewTask}
-              placeholder="Enter new task"
-              placeholderTextColor={theme.placeholder}
-              onSubmitEditing={handleSubmitEditing}
-              returnKeyType="done"
-            />
-            <TouchableOpacity onPress={addTask} style={styles.addButton}>
-              <Ionicons name="add-circle-outline" size={28} color={theme.primary} />
-            </TouchableOpacity>
-          </View>
+          <CreateTask
+            onSubmit={handleSubmitEditing}
+          />
         }
       />
     </KeyboardAvoidingView>
   );
 }
 
-const getPriorityColor = (priority: number): string => {
-  const colors = {
-    1: '#90CAF9',
-    2: '#4CAF50',
-    3: '#FFA726',
-    4: '#F57C00',
-    5: '#D32F2F',
-  };
-  return colors[priority as keyof typeof colors] || colors[1];
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 50,
   },
   header: {
     paddingHorizontal: 20,

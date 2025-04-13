@@ -1,99 +1,34 @@
-import { View, Text, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { useState, useMemo } from 'react';
-import { Project } from './types';
+import { Text, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState } from 'react';
+import { Project } from '../../types/project';
 import { BottomMenu } from '../common/BottomMenu';
 import { useTheme } from '../../theme/ThemeContext';
-import { ProjectItem } from './ProjectItem';
-import { CreateProject } from './CreateProject';
-import { FilterButtons } from './FilterButtons';
-
-type FilterStatus = 'all' | 'active' | 'paused';
+import { useProjects } from '../../hooks/useProjects';
+import { ProjectItem,  CreateProject , FilterButtons } from './';
 
 interface ProjectListProps {
   onSelectProject: (project: Project) => void;
   onSettingsPress: () => void;
 }
 
-const DEFAULT_PROJECTS: Project[] = [
-  {
-    id: '1',
-    name: 'Learn React Native',
-    progress: 3,
-    motivation: 4,
-    priority: 5,
-    isActive: true,
-  },
-  {
-    id: '2',
-    name: 'Build Portfolio Website',
-    progress: 2,
-    motivation: 5,
-    priority: 4,
-    isActive: true,
-  },
-  {
-    id: '3',
-    name: 'Write Blog Posts',
-    progress: 1,
-    motivation: 3,
-    priority: 2,
-    isActive: false,
-  }
-];
-
 export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListProps) => {
   const { theme } = useTheme();
-  const [projects, setProjects] = useState<Project[]>(DEFAULT_PROJECTS);
+  const {
+    projects,
+    filterStatus,
+    sortByPriority,
+    addProject,
+    toggleProjectStatus,
+    updateLevel,
+    setFilterStatus,
+    setSortByPriority,
+  } = useProjects();
   const [newProject, setNewProject] = useState('');
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('active');
-  const [sortByPriority, setSortByPriority] = useState(true);
 
-  const addProject = () => {
-    if (newProject.trim()) {
-      const project: Project = {
-        id: Date.now().toString(),
-        name: newProject.trim(),
-        progress: 1,
-        motivation: 1,
-        priority: 1,
-        isActive: true
-      };
-      setProjects([...projects, project]);
-      setNewProject('');
-    }
+  const handleAddProject = () => {
+    addProject(newProject);
+    setNewProject('');
   };
-
-  const toggleProjectStatus = (id: string) => {
-    setProjects(projects.map(project => 
-      project.id === id 
-        ? { ...project, isActive: !project.isActive }
-        : project
-    ));
-  };
-
-  const updateLevel = (id: string, field: 'progress' | 'motivation' | 'priority', value: number) => {
-    setProjects(projects.map(project =>
-      project.id === id
-        ? { ...project, [field]: Math.max(1, Math.min(5, value)) }
-        : project
-    ));
-  };
-
-  const filteredAndSortedProjects = useMemo(() => {
-    let filtered = [...projects];
-    
-    if (filterStatus === 'active') {
-      filtered = filtered.filter(project => project.isActive);
-    } else if (filterStatus === 'paused') {
-      filtered = filtered.filter(project => !project.isActive);
-    }
-
-    if (sortByPriority) {
-      filtered.sort((a, b) => b.priority - a.priority);
-    }
-
-    return filtered;
-  }, [projects, filterStatus, sortByPriority]);
 
   return (
     <KeyboardAvoidingView 
@@ -112,7 +47,7 @@ export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListPro
 
       <FlatList
         style={styles.list}
-        data={filteredAndSortedProjects}
+        data={projects}
         renderItem={({ item }) => (
           <ProjectItem
             project={item}
@@ -131,7 +66,7 @@ export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListPro
           <CreateProject
             value={newProject}
             onChange={setNewProject}
-            onSubmit={addProject}
+            onSubmit={handleAddProject}
           />
         }
       />

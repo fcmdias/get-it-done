@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { Project } from './types';
-import { useTheme } from '../../theme/ThemeContext';
+import { Project } from '../../../types/project';
+import { useTheme } from '../../../theme/ThemeContext';
 
 interface ProjectItemProps {
   project: Project;
@@ -145,4 +145,4 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 40,
   },
-}); 
+});  

@@ -1,11 +1,8 @@
-import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useState } from 'react';
-import { ProjectList } from './components/project/ProjectList';
-import TaskList from './components/task/TaskList';
-import { Project } from './components/project/types';
-import { ThemeProvider, useTheme } from './theme/ThemeContext';
-import { Settings } from './components/settings/Settings';
+import { Project } from './types/project';
+import { ThemeProvider } from './theme/ThemeContext';
+import { ProjectsPage, TasksPage, SettingsPage } from './pages';
 
 export default function App() {
   return (
@@ -16,44 +13,35 @@ export default function App() {
 }
 
 function AppContent() {
-  const { theme } = useTheme();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
-  const goToHome = () => {
-    setSelectedProject(null);
-    setShowSettings(false);
-  };
-
   if (showSettings) {
     return (
-      <Settings 
+      <SettingsPage
         onBack={() => setShowSettings(false)}
-        onHomePress={goToHome}
+        onHomePress={() => setShowSettings(false)}
       />
     );
   }
 
   if (selectedProject) {
     return (
-      <TaskList
+      <TasksPage
         projectId={selectedProject.id}
         projectName={selectedProject.name}
         onBack={() => setSelectedProject(null)}
         onSettingsPress={() => setShowSettings(true)}
-        onHomePress={goToHome}
+        onHomePress={() => setSelectedProject(null)}
       />
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ProjectList 
-        onSelectProject={setSelectedProject}
-        onSettingsPress={() => setShowSettings(true)}
-      />
-      <StatusBar style={theme.isDark ? "light" : "dark"} />
-    </View>
+    <ProjectsPage 
+      onSelectProject={setSelectedProject}
+      onSettingsPress={() => setShowSettings(true)}
+    />
   );
 }
 

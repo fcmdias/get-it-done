@@ -1,13 +1,14 @@
-import { Animated, View, StyleSheet } from 'react-native';
+import { View, Animated, StyleSheet } from 'react-native';
+import { useTheme } from '../../../theme/ThemeContext';
 
 interface SwipeHandleProps {
   taskId: string;
   taskAnimations: { [key: string]: Animated.Value };
-  createPanResponder: (taskId: string) => any;
+  panResponder: any;
 }
 
-export const SwipeHandle = ({ taskId, taskAnimations, createPanResponder }: SwipeHandleProps) => {
-  const panResponder = createPanResponder(taskId);
+export const SwipeHandle = ({ taskId, taskAnimations, panResponder }: SwipeHandleProps) => {
+  const { theme } = useTheme();
 
   return (
     <Animated.View
@@ -15,15 +16,16 @@ export const SwipeHandle = ({ taskId, taskAnimations, createPanResponder }: Swip
       style={[
         styles.swipeHandle,
         {
+          backgroundColor: theme.card,
           transform: [{
             translateX: taskAnimations[taskId] || new Animated.Value(0)
           }]
         }
       ]}
     >
-      <View style={styles.handleBar} />
-      <View style={styles.handleBar} />
-      <View style={styles.handleBar} />
+      <View style={[styles.handleBar, { backgroundColor: theme.secondary }]} />
+      <View style={[styles.handleBar, { backgroundColor: theme.secondary }]} />
+      <View style={[styles.handleBar, { backgroundColor: theme.secondary }]} />
     </Animated.View>
   );
 };
@@ -32,7 +34,6 @@ const styles = StyleSheet.create({
   swipeHandle: {
     width: 80,
     height: '100%',
-    backgroundColor: '#e0e0e0',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -43,7 +44,6 @@ const styles = StyleSheet.create({
   handleBar: {
     width: 4,
     height: 4,
-    backgroundColor: '#666',
     marginVertical: 2,
     borderRadius: 2,
   },

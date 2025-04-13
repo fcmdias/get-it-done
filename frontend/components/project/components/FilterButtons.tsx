@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../../theme/ThemeContext';
 
 interface FilterButtonsProps {
   filterStatus: 'all' | 'active' | 'paused';

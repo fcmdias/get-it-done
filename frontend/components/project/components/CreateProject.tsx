@@ -1,7 +1,7 @@
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../../theme/ThemeContext';
 
 interface CreateProjectProps {
   value: string;
@@ -72,4 +72,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-}); 
+});  

@@ -5,4 +5,6 @@ export interface Project {
   motivation: number;
   priority: number;
   isActive: boolean;
-} 
+}
+
+export type FilterStatus = 'all' | 'active' | 'paused'; 
