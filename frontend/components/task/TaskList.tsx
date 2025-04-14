@@ -10,11 +10,10 @@ interface TaskListProps {
   projectId: string;
   projectName: string;
   onBack: () => void;
-  onSettingsPress: () => void;
-  onHomePress: () => void;
+  navigation: any;
 }
 
-export default function TaskList({ projectId, projectName, onBack, onSettingsPress, onHomePress }: TaskListProps) {
+export default function TaskList({ projectId, projectName, onBack, onSettingsPress, onHomePress, navigation }: TaskListProps) {
   const { theme } = useTheme();
   const { tasks, selectedTaskId, taskAnimations, setSelectedTaskId, addTask, toggleTask, updateTaskProgress, updateTaskPriority } = useTasks(projectId);
 
@@ -102,7 +101,7 @@ export default function TaskList({ projectId, projectName, onBack, onSettingsPre
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>{projectName} Tasks</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Tasks</Text>
       </View>
 
       <FlatList
@@ -114,13 +113,12 @@ export default function TaskList({ projectId, projectName, onBack, onSettingsPre
 
       <BottomMenu
         showInput
-        onSettingsPress={onSettingsPress}
-        onHomePress={onHomePress}
         inputComponent={
           <CreateTask
             onSubmit={handleSubmitEditing}
           />
         }
+        navigation={navigation}
       />
     </KeyboardAvoidingView>
   );
@@ -136,8 +134,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: 'bold',
+    paddingTop: 10,
   },
   bottomContainer: {
     borderTopWidth: 1,

@@ -2,16 +2,20 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Project } from '../../../types/project';
 import { useTheme } from '../../../theme/ThemeContext';
+import { useState } from 'react';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface ProjectItemProps {
   project: Project;
   onSelect: (project: Project) => void;
   onToggleStatus: (id: string) => void;
   onUpdateLevel: (id: string, field: 'progress' | 'motivation' | 'priority', value: number) => void;
+  navigation: any; // You might want to properly type this based on your navigation setup
 }
 
-export const ProjectItem = ({ project, onSelect, onToggleStatus, onUpdateLevel }: ProjectItemProps) => {
+export const ProjectItem = ({ project, onSelect, onToggleStatus, onUpdateLevel, navigation }: ProjectItemProps) => {
   const { theme } = useTheme();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const renderLevelControl = (
     value: number,
@@ -34,7 +38,16 @@ export const ProjectItem = ({ project, onSelect, onToggleStatus, onUpdateLevel }
   );
 
   return (
-    <TouchableOpacity onPress={() => onSelect(project)}>
+    <TouchableOpacity 
+      onPress={() => {
+        navigation.navigate('ProjectPage', {
+          project: project,
+          onUpdateProject: onSelect,
+          onToggleStatus: onToggleStatus,
+          onUpdateLevel: onUpdateLevel
+        });
+      }}
+    >
       <View style={[styles.projectItem, { 
         backgroundColor: theme.card,
         borderBottomColor: theme.border,
@@ -49,43 +62,62 @@ export const ProjectItem = ({ project, onSelect, onToggleStatus, onUpdateLevel }
           <TouchableOpacity
             onPress={(e) => {
               e.stopPropagation();
-              onToggleStatus(project.id);
+              setIsSettingsOpen(!isSettingsOpen);
             }}
-            style={[styles.statusButton, { 
-              backgroundColor: project.isActive ? theme.success : theme.danger 
-            }]}
+            style={[styles.settingsButton, { backgroundColor: isSettingsOpen ? theme.secondary : 'transparent' }]}
           >
-            <Text style={[styles.statusButtonText, { color: theme.background }]}>
-              {project.isActive ? '▶' : '⏸'}
-            </Text>
+            <MaterialCommunityIcons 
+              name="cog"
+              size={24}
+              color={isSettingsOpen ? theme.background : theme.secondary}
+            />
           </TouchableOpacity>
         </View>
         
-        <View style={styles.metadataContainer}>
-          <View style={styles.metadataItem}>
-            <Text style={[styles.label, { color: theme.secondary }]}>Progress</Text>
-            {renderLevelControl(
-              project.progress,
-              (value) => onUpdateLevel(project.id, 'progress', value)
-            )}
+        {isSettingsOpen && (
+          <View style={styles.metadataContainer}>
+            <View style={styles.statusContainer}>
+              <Text style={[styles.label, { color: theme.secondary }]}>Status</Text>
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onToggleStatus(project.id);
+                }}
+                style={[styles.statusButton, { 
+                  backgroundColor: project.isActive ? theme.success : theme.danger,
+                }]}
+              >
+                <Text style={[styles.statusButtonText, { color: theme.background }]}>
+                  {project.isActive ? 'Active' : 'Paused'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.metadataItem}>
+              <Text style={[styles.label, { color: theme.secondary }]}>Progress</Text>
+              {renderLevelControl(
+                project.progress,
+                (value) => onUpdateLevel(project.id, 'progress', value)
+              )}
+            </View>
+            
+            <View style={styles.metadataItem}>
+              <Text style={[styles.label, { color: theme.secondary }]}>Motivation</Text>
+              {renderLevelControl(
+                project.motivation,
+                (value) => onUpdateLevel(project.id, 'motivation', value)
+              )}
+            </View>
+            
+            <View style={styles.metadataItem}>
+              <Text style={[styles.label, { color: theme.secondary }]}>Priority</Text>
+              {renderLevelControl(
+                project.priority,
+                (value) => onUpdateLevel(project.id, 'priority', value)
+              )}
+            </View>
           </View>
-          
-          <View style={styles.metadataItem}>
-            <Text style={[styles.label, { color: theme.secondary }]}>Motivation</Text>
-            {renderLevelControl(
-              project.motivation,
-              (value) => onUpdateLevel(project.id, 'motivation', value)
-            )}
-          </View>
-          
-          <View style={styles.metadataItem}>
-            <Text style={[styles.label, { color: theme.secondary }]}>Priority</Text>
-            {renderLevelControl(
-              project.priority,
-              (value) => onUpdateLevel(project.id, 'priority', value)
-            )}
-          </View>
-        </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -112,22 +144,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  statusButton: {
-    padding: 5,
-    borderRadius: 5,
-  },
-  statusButtonText: {
-    fontSize: 16,
-  },
   metadataContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
   },
   metadataItem: {
-    flex: 1,
-    marginRight: 10,
+    marginBottom: 10,
+    width: '100%',
   },
   label: {
     fontSize: 16,
@@ -142,7 +167,29 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   slider: {
-    width: '100%',
+    flex: 1,
     height: 40,
+  },
+  settingsButton: {
+    padding: 8,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statusContainer: {
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingBottom: 15,
+  },
+  statusButton: {
+    padding: 8,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    marginTop: 5,
+  },
+  statusButtonText: {
+    fontSize: 16,
+    paddingHorizontal: 10,
   },
 });  

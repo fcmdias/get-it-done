@@ -1,3 +1,4 @@
+import React from 'react';
 import { Text, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState } from 'react';
 import { Project } from '../../types/project';
@@ -7,11 +8,18 @@ import { useProjects } from '../../hooks/useProjects';
 import { ProjectItem,  CreateProject , FilterButtons } from './';
 
 interface ProjectListProps {
-  onSelectProject: (project: Project) => void;
-  onSettingsPress: () => void;
+  navigation: any;
+  onUpdateProject: (project: Project) => void;
+  onToggleStatus: (id: string) => void;
+  onUpdateLevel: (id: string, field: 'progress' | 'motivation' | 'priority', value: number) => void;
 }
 
-export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListProps) => {
+export const ProjectList = ({ 
+  navigation,
+  onUpdateProject,
+  onToggleStatus,
+  onUpdateLevel 
+}: ProjectListProps) => {
   const { theme } = useTheme();
   const {
     projects,
@@ -29,6 +37,16 @@ export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListPro
     addProject(newProject);
     setNewProject('');
   };
+
+  const renderItem = ({ item }: { item: Project }) => (
+    <ProjectItem
+      project={item}
+      onSelect={onUpdateProject}
+      onToggleStatus={onToggleStatus}
+      onUpdateLevel={onUpdateLevel}
+      navigation={navigation}
+    />
+  );
 
   return (
     <KeyboardAvoidingView 
@@ -48,20 +66,14 @@ export const ProjectList = ({ onSelectProject, onSettingsPress }: ProjectListPro
       <FlatList
         style={styles.list}
         data={projects}
-        renderItem={({ item }) => (
-          <ProjectItem
-            project={item}
-            onSelect={onSelectProject}
-            onToggleStatus={toggleProjectStatus}
-            onUpdateLevel={updateLevel}
-          />
-        )}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
       />
 
       <BottomMenu
         showInput
-        onSettingsPress={onSettingsPress}
+        navigation={navigation}
         inputComponent={
           <CreateProject
             value={newProject}
@@ -88,5 +100,8 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+  },
+  listContent: {
+    padding: 16,
   },
 }); 

@@ -4,11 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { BottomMenu } from '../common/BottomMenu';
 
 interface SettingsProps {
+  navigation: any;
   onBack: () => void;
   onHomePress: () => void;
 }
 
-export const Settings = ({ onBack, onHomePress }: SettingsProps) => {
+export const Settings = ({ 
+  navigation,
+  onBack, 
+  onHomePress,
+}: SettingsProps) => {
   const { theme, isDark, toggleTheme } = useTheme();
 
   return (
@@ -41,7 +46,8 @@ export const Settings = ({ onBack, onHomePress }: SettingsProps) => {
       </View>
 
       <BottomMenu
-        onHomePress={onHomePress}
+        showInput
+        navigation={navigation}
       />
     </View>
   );

@@ -5,15 +5,13 @@ import { useTheme } from '../../theme/ThemeContext';
 interface BottomMenuProps {
   showInput?: boolean;
   inputComponent?: React.ReactNode;
-  onSettingsPress?: () => void;
-  onHomePress?: () => void;
+  navigation: any;
 }
 
 export const BottomMenu = ({ 
   showInput, 
   inputComponent, 
-  onSettingsPress,
-  onHomePress,
+  navigation,
 }: BottomMenuProps) => {
   const { theme } = useTheme();
 
@@ -31,21 +29,19 @@ export const BottomMenu = ({
       <View style={styles.menuContainer}>
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={onHomePress}
+          onPress={() => navigation.navigate('Projects')}
         >
           <Ionicons name="home-outline" size={24} color={theme.primary} />
-          <Text style={[styles.menuText, { color: theme.primary }]}>Home</Text>
+          <Text style={[styles.menuText, { color: theme.primary }]}>Projects</Text>
         </TouchableOpacity>
 
-        {onSettingsPress && (
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={onSettingsPress}
-          >
-            <Ionicons name="settings-outline" size={24} color={theme.primary} />
-            <Text style={[styles.menuText, { color: theme.primary }]}>Settings</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('Settings')}
+        >
+          <Ionicons name="settings-outline" size={24} color={theme.primary} />
+          <Text style={[styles.menuText, { color: theme.primary }]}>Settings</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
