@@ -13,7 +13,7 @@ interface TaskListProps {
   navigation: any;
 }
 
-export default function TaskList({ projectId, projectName, onBack, onSettingsPress, onHomePress, navigation }: TaskListProps) {
+export default function TaskList({ projectId, projectName, onBack, navigation }: TaskListProps) {
   const { theme } = useTheme();
   const { tasks, selectedTaskId, taskAnimations, setSelectedTaskId, addTask, toggleTask, updateTaskProgress, updateTaskPriority } = useTasks(projectId);
 

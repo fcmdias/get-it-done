@@ -11,15 +11,17 @@ interface SettingsProps {
 
 export const Settings = ({ 
   navigation,
-  onBack, 
-  onHomePress,
 }: SettingsProps) => {
   const { theme, isDark, toggleTheme } = useTheme();
+
+  const handleChangePassword = () => {
+    // Navigate to password change screen
+    navigation.navigate('ChangePassword');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
-        <Text style={[styles.title, { color: theme.text }]}>Settings</Text>
 
         <View style={[styles.section, { borderBottomColor: theme.border }]}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance</Text>
@@ -41,6 +43,31 @@ export const Settings = ({
             <Text style={[styles.settingValue, { color: theme.secondary }]}>
               {isDark ? 'Dark' : 'Light'}
             </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.section, { borderBottomColor: theme.border }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Security</Text>
+          <TouchableOpacity 
+            style={[styles.settingItem, { borderBottomColor: theme.border }]}
+            onPress={handleChangePassword}
+          >
+            <View style={styles.settingContent}>
+              <Ionicons 
+                name="lock-closed" 
+                size={24} 
+                color={theme.primary}
+                style={styles.settingIcon}
+              />
+              <Text style={[styles.settingText, { color: theme.text }]}>
+                Change Password
+              </Text>
+            </View>
+            <Ionicons 
+              name="chevron-forward" 
+              size={24} 
+              color={theme.secondary}
+            />
           </TouchableOpacity>
         </View>
       </View>
