@@ -5,7 +5,7 @@ import { Project } from '../../types/project';
 import { BottomMenu } from '../common/BottomMenu';
 import { useTheme } from '../../theme/ThemeContext';
 import { useProjects } from '../../hooks/useProjects';
-import { ProjectItem,  CreateProject , FilterButtons } from './';
+import { ProjectItem,  CreateProject , FilterButtons } from '.';
 
 interface ProjectListProps {
   navigation: any;
