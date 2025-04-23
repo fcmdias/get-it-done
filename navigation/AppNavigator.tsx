@@ -6,8 +6,22 @@ import { SettingsPage } from '../pages/settings/SettingsPage';
 import { ChangePasswordPage } from '../pages/settings/ChangePasswordPage';
 import { AuthNavigator } from './AuthNavigator';
 import auth from '@react-native-firebase/auth';
+import { Project } from '../types/project';
 
-const Stack = createStackNavigator();
+type RootStackParamList = {
+  Auth: undefined;
+  Projects: undefined;
+  ProjectPage: { 
+    project: Project;
+    onUpdateProject: (project: Project) => void;
+    onToggleStatus: (id: string) => void;
+    onUpdateLevel: (id: string, field: 'progress' | 'motivation' | 'priority', value: number) => void;
+  };
+  Settings: undefined;
+  ChangePassword: undefined;
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
 
 export const AppNavigator = () => {
   const [initializing, setInitializing] = useState(true);

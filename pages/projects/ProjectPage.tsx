@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import TaskList from '../../components/task/TaskList';
-import { useTheme } from '../../theme/ThemeContext';
+import { TaskList } from '@/components/task/TaskList';
+import { useTheme } from '@/theme/ThemeContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Slider from '@react-native-community/slider';
-import { Project } from '../../types/project';
+import { Project } from '@/types/project';
 
 interface ProjectPageProps {
   route: {

@@ -1,82 +1,67 @@
-import { useState, useMemo, useRef } from 'react';
-import { Animated } from 'react-native';
-import { Task, TaskWithAnimation } from '../types/task';
-import { getDefaultTasks } from '../constants/tasks';
+import { useState, useEffect } from 'react';
+import { Task } from '../types/task';
+import { firestoreService } from '../services/firestore';
 
 export const useTasks = (projectId: string) => {
-  const [tasks, setTasks] = useState<TaskWithAnimation[]>(() => getDefaultTasks(projectId));
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const taskAnimations = useRef<{ [key: string]: Animated.Value }>({}).current;
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const addTask = (name: string) => {
-    if (name.trim()) {
-      const task: Task = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        completed: false,
-        progress: 0,
-        priority: 1,
-        createdOn: new Date(),
-      };
-      setTasks([...tasks, task]);
+  useEffect(() => {
+    const unsubscribe = firestoreService.subscribeToTasks(projectId, (fetchedTasks) => {
+      setTasks(fetchedTasks);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [projectId]);
+
+  const addTask = async (name: string) => {
+    const newTask: Omit<Task, 'id'> = {
+      name,
+      isCompleted: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      await firestoreService.addTask(projectId, newTask);
+    } catch (error) {
+      console.error('Error adding task:', error);
+      throw error;
     }
   };
 
-  const toggleTask = (taskId: string) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId
-        ? {
-            ...task,
-            completed: !task.completed,
-            completedOn: !task.completed ? new Date() : undefined,
-            progress: !task.completed ? 1 : task.progress
-          }
-        : task
-    ));
+  const toggleTaskStatus = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    try {
+      await firestoreService.updateTask(projectId, taskId, {
+        isCompleted: !task.isCompleted
+      });
+    } catch (error) {
+      console.error('Error toggling task status:', error);
+      throw error;
+    }
   };
 
-  const updateTaskProgress = (taskId: string, progress: number) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId
-        ? { ...task, progress }
-        : task
-    ));
+  const deleteTask = async (taskId: string) => {
+    try {
+      await firestoreService.deleteTask(projectId, taskId);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
   };
 
-  const updateTaskPriority = (taskId: string, priority: number) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId
-        ? { ...task, priority }
-        : task
-    ));
-  };
-
-  const sortedTasks = useMemo(() => {
-    return [...tasks].sort((a, b) => {
-      if (a.completed !== b.completed) {
-        return a.completed ? 1 : -1;
-      }
-      
-      if (!a.completed && !b.completed) {
-        if (a.priority !== b.priority) {
-          return b.priority - a.priority;
-        }
-        return b.createdOn.getTime() - a.createdOn.getTime();
-      } else {
-        return (b.completedOn?.getTime() || 0) - (a.completedOn?.getTime() || 0);
-      }
-    });
-  }, [tasks]);
+  const sortedTasks = tasks.sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   return {
     tasks: sortedTasks,
-    selectedTaskId,
-    taskAnimations,
-    setSelectedTaskId,
+    isLoading,
     addTask,
-    toggleTask,
-    updateTaskProgress,
-    updateTaskPriority,
-    setTasks,
+    toggleTaskStatus,
+    deleteTask,
   };
 }; 

@@ -1,12 +1,11 @@
 import { View, StyleSheet } from 'react-native';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '@/theme/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
-import TaskList from '../../components/task/TaskList';
+import { TaskList } from '@/components/task/TaskList';
 
 interface TasksPageProps {
   projectId: string;
   projectName: string;
-  onBack: () => void;
   onSettingsPress: () => void;
   onHomePress: () => void;
 }
@@ -14,9 +13,8 @@ interface TasksPageProps {
 export const TasksPage = ({ 
   projectId, 
   projectName, 
-  onBack, 
   onSettingsPress,
-  onHomePress 
+  onHomePress,
 }: TasksPageProps) => {
   const { theme, isDark } = useTheme();
 
@@ -25,9 +23,6 @@ export const TasksPage = ({
       <TaskList 
         projectId={projectId}
         projectName={projectName}
-        onBack={onBack}
-        onSettingsPress={onSettingsPress}
-        onHomePress={onHomePress}
       />
       <StatusBar style={isDark ? "light" : "dark"} />
     </View>

@@ -38,12 +38,28 @@ export const ProjectList = ({
     setNewProject('');
   };
 
+  const handleProjectPress = (project: Project) => {
+    navigation.navigate('ProjectPage', {
+      project,
+      onUpdateProject: (updatedProject: Project) => {
+        // Handle project update
+        console.log('Project updated:', updatedProject);
+      },
+      onToggleStatus: (id: string) => {
+        toggleProjectStatus(id);
+      },
+      onUpdateLevel: (id: string, field: 'progress' | 'motivation' | 'priority', value: number) => {
+        updateLevel(id, field, value);
+      }
+    });
+  };
+
   const renderItem = ({ item }: { item: Project }) => (
     <ProjectItem
       project={item}
-      onSelect={onUpdateProject}
-      onToggleStatus={onToggleStatus}
-      onUpdateLevel={onUpdateLevel}
+      onSelect={() => handleProjectPress(item)}
+      onToggleStatus={toggleProjectStatus}
+      onUpdateLevel={updateLevel}
       navigation={navigation}
     />
   );
