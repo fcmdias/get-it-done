@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView 
 import { useTheme } from '../../theme/ThemeContext';
 import { BottomMenu } from '../../components/common/BottomMenu';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import auth from '@react-native-firebase/auth';
 
 interface PasswordRequirement {
   label: string;
@@ -63,21 +64,7 @@ export const ChangePasswordPage = ({ navigation }: ChangePasswordPageProps) => {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to change password');
-      }
-
+      await auth().currentUser?.updatePassword(newPassword);
       Alert.alert('Success', 'Password changed successfully', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
@@ -90,7 +77,6 @@ export const ChangePasswordPage = ({ navigation }: ChangePasswordPageProps) => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-
       <View style={styles.header}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
@@ -105,7 +91,6 @@ export const ChangePasswordPage = ({ navigation }: ChangePasswordPageProps) => {
         <Text style={[styles.title, { color: theme.text }]}>Change Password</Text>
       </View>
 
-      
       <ScrollView style={styles.content}>
         <View style={[styles.form, { backgroundColor: theme.cardBackground }]}>
           <View style={styles.inputContainer}>
@@ -132,7 +117,7 @@ export const ChangePasswordPage = ({ navigation }: ChangePasswordPageProps) => {
               />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.inputContainer}>
             <TextInput
               style={[styles.input, { 
@@ -157,7 +142,7 @@ export const ChangePasswordPage = ({ navigation }: ChangePasswordPageProps) => {
               />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.inputContainer}>
             <TextInput
               style={[styles.input, { 
