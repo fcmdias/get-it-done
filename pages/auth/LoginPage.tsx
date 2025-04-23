@@ -8,14 +8,25 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import auth from '@react-native-firebase/auth';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  Projects: undefined;
+  ForgotPassword: undefined;
+};
+
+type LoginPageNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
 interface LoginPageProps {
-  navigation: any;
+  navigation: LoginPageNavigationProp;
 }
 
 export const LoginPage = ({ navigation }: LoginPageProps) => {
@@ -33,14 +44,15 @@ export const LoginPage = ({ navigation }: LoginPageProps) => {
 
     setIsLoading(true);
     try {
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
-      const user = userCredential.user;
+      await auth().signInWithEmailAndPassword(email, password);
+
+      console.log('user logged in', auth().currentUser?.email);
+      // navigation.replace('Projects');
+    } catch (error) {
+      const firebaseError = error as FirebaseAuthTypes.NativeFirebaseAuthError;
+      let errorMessage = 'An error occurred during sign in';
       
-      navigation.replace('Projects');
-    } catch (error: any) {
-      let errorMessage = 'Invalid email or password';
-      
-      switch (error.code) {
+      switch (firebaseError.code) {
         case 'auth/invalid-email':
           errorMessage = 'Invalid email address';
           break;
@@ -53,6 +65,11 @@ export const LoginPage = ({ navigation }: LoginPageProps) => {
         case 'auth/wrong-password':
           errorMessage = 'Invalid password';
           break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Network error. Please check your connection';
+          break;
+        default:
+          console.error('Login error:', firebaseError);
       }
       
       Alert.alert('Error', errorMessage);
@@ -93,6 +110,7 @@ export const LoginPage = ({ navigation }: LoginPageProps) => {
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                editable={!isLoading}
               />
             </View>
 
@@ -114,10 +132,12 @@ export const LoginPage = ({ navigation }: LoginPageProps) => {
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
+                editable={!isLoading}
               />
               <TouchableOpacity 
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
               >
                 <Ionicons 
                   name={showPassword ? "eye-off" : "eye"} 
@@ -130,6 +150,7 @@ export const LoginPage = ({ navigation }: LoginPageProps) => {
             <TouchableOpacity 
               style={styles.forgotPassword}
               onPress={() => navigation.navigate('ForgotPassword')}
+              disabled={isLoading}
             >
               <Text style={[styles.forgotPasswordText, { color: theme.primary }]}>
                 Forgot Password?
@@ -137,20 +158,31 @@ export const LoginPage = ({ navigation }: LoginPageProps) => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: theme.primary }]}
+              style={[
+                styles.button, 
+                { 
+                  backgroundColor: theme.primary,
+                  opacity: isLoading ? 0.7 : 1
+                }
+              ]}
               onPress={handleLogin}
               disabled={isLoading}
             >
-              <Text style={styles.buttonText}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.buttonText}>Sign In</Text>
+              )}
             </TouchableOpacity>
 
             <View style={styles.registerContainer}>
               <Text style={[styles.registerText, { color: theme.secondary }]}>
                 Don't have an account?
               </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <TouchableOpacity 
+                onPress={() => navigation.navigate('Register')}
+                disabled={isLoading}
+              >
                 <Text style={[styles.registerLink, { color: theme.primary }]}>
                   {' Sign Up'}
                 </Text>

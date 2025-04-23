@@ -1,7 +1,8 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomMenu } from '../common/BottomMenu';
+import auth from '@react-native-firebase/auth';
 
 interface SettingsProps {
   navigation: any;
@@ -17,6 +18,15 @@ export const Settings = ({
   const handleChangePassword = () => {
     // Navigate to password change screen
     navigation.navigate('ChangePassword');
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await auth().signOut();
+      console.log('user signed out', auth().currentUser?.email);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to sign out. Please try again.');
+    }
   };
 
   return (
@@ -156,7 +166,7 @@ export const Settings = ({
           {/* Sign Out Option */}
           <TouchableOpacity 
             style={[styles.signOutButton, { borderColor: theme.danger }]}
-            onPress={() => {/* Handle sign out */}}
+            onPress={handleSignOut}
           >
             <Text style={[styles.signOutText, { color: theme.danger }]}>Sign Out</Text>
           </TouchableOpacity>
