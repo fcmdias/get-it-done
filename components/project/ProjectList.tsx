@@ -1,25 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { useState } from 'react';
 import { Project } from '../../types/project';
 import { BottomMenu } from '../common/BottomMenu';
 import { useTheme } from '../../theme/ThemeContext';
+import { ProjectItem } from './ProjectItem';
+import { CreateProject } from './CreateProject';
+import { FilterButtons } from './FilterButtons';
 import { useProjects } from '../../hooks/useProjects';
-import { ProjectItem,  CreateProject , FilterButtons } from '.';
 
 interface ProjectListProps {
   navigation: any;
-  onUpdateProject: (project: Project) => void;
-  onToggleStatus: (id: string) => void;
-  onUpdateLevel: (id: string, field: 'progress' | 'motivation' | 'priority', value: number) => void;
 }
 
-export const ProjectList = ({ 
-  navigation,
-  onUpdateProject,
-  onToggleStatus,
-  onUpdateLevel 
-}: ProjectListProps) => {
+export const ProjectList = ({ navigation }: ProjectListProps) => {
   const { theme } = useTheme();
   const {
     projects,
@@ -32,10 +25,19 @@ export const ProjectList = ({
     setSortByPriority,
   } = useProjects();
   const [newProject, setNewProject] = useState('');
+  const [showAddProject, setShowAddProject] = useState(false);
+
+  // Set default filter to active and sort by priority
+  useEffect(() => {
+    setFilterStatus('active');
+    setSortByPriority(true);
+  }, []);
 
   const handleAddProject = () => {
-    addProject(newProject);
-    setNewProject('');
+    if (newProject.trim()) {
+      addProject(newProject.trim());
+      setNewProject('');
+    }
   };
 
   const handleProjectPress = (project: Project) => {
@@ -105,7 +107,6 @@ export const ProjectList = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     width: '100%',
   },
   title: {

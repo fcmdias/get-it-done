@@ -9,9 +9,11 @@ import { Task } from '../../types/task';
 interface TaskListProps {
   projectId: string;
   projectName: string;
+  onBack: () => void;
+  navigation: any;
 }
 
-export const TaskList = ({ projectId, projectName}: TaskListProps) => {
+export const TaskList = ({ projectId, projectName, onBack, navigation }: TaskListProps) => {
   const { theme } = useTheme();
   const { tasks, isLoading, addTask, toggleTaskStatus, deleteTask } = useTasks(projectId);
   const [newTask, setNewTask] = useState('');
@@ -76,7 +78,7 @@ export const TaskList = ({ projectId, projectName}: TaskListProps) => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.title, { color: theme.text }]}>{projectName}</Text>
+      <Text style={[styles.title, { color: theme.text }]}>Tasks</Text>
       
       <FlatList
         data={tasks}

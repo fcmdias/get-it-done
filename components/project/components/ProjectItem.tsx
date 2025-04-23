@@ -15,7 +15,6 @@ interface ProjectItemProps {
 
 export const ProjectItem = ({ project, onSelect, onToggleStatus, onUpdateLevel, navigation }: ProjectItemProps) => {
   const { theme } = useTheme();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const renderLevelControl = (
     value: number,
@@ -59,65 +58,7 @@ export const ProjectItem = ({ project, onSelect, onToggleStatus, onUpdateLevel, 
       }]}>
         <View style={styles.projectHeader}>
           <Text style={[styles.projectName, { color: theme.text }]}>{project.name}</Text>
-          <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation();
-              setIsSettingsOpen(!isSettingsOpen);
-            }}
-            style={[styles.settingsButton, { backgroundColor: isSettingsOpen ? theme.secondary : 'transparent' }]}
-          >
-            <MaterialCommunityIcons 
-              name="cog"
-              size={24}
-              color={isSettingsOpen ? theme.background : theme.secondary}
-            />
-          </TouchableOpacity>
         </View>
-        
-        {isSettingsOpen && (
-          <View style={styles.metadataContainer}>
-            <View style={styles.statusContainer}>
-              <Text style={[styles.label, { color: theme.secondary }]}>Status</Text>
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();
-                  onToggleStatus(project.id);
-                }}
-                style={[styles.statusButton, { 
-                  backgroundColor: project.isActive ? theme.success : theme.danger,
-                }]}
-              >
-                <Text style={[styles.statusButtonText, { color: theme.background }]}>
-                  {project.isActive ? 'Active' : 'Paused'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.metadataItem}>
-              <Text style={[styles.label, { color: theme.secondary }]}>Progress</Text>
-              {renderLevelControl(
-                project.progress,
-                (value) => onUpdateLevel(project.id, 'progress', value)
-              )}
-            </View>
-            
-            <View style={styles.metadataItem}>
-              <Text style={[styles.label, { color: theme.secondary }]}>Motivation</Text>
-              {renderLevelControl(
-                project.motivation,
-                (value) => onUpdateLevel(project.id, 'motivation', value)
-              )}
-            </View>
-            
-            <View style={styles.metadataItem}>
-              <Text style={[styles.label, { color: theme.secondary }]}>Priority</Text>
-              {renderLevelControl(
-                project.priority,
-                (value) => onUpdateLevel(project.id, 'priority', value)
-              )}
-            </View>
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );
