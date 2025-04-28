@@ -9,12 +9,15 @@ import auth from '@react-native-firebase/auth';
 import { Project } from '../types/project';
 import { ProjectSettings } from '@/pages/projects/ProjectSettings';
 import { User } from '@/types/user';
+import { TaskDetailsPage } from '@/pages/tasks/TaskDetailsPage';
+import { Task } from '@/types/task';
 
 type RootStackParamList = {
   Login: undefined;
   Projects: undefined;
   ProjectPage: { project: Project; onUpdateProject: (project: Project) => void; onToggleStatus: (id: string) => void; onUpdateLevel: (id: string, field: 'progress' | 'motivation' | 'priority', value: number) => void };
   ProjectSettings: { project: Project; onUpdateProject: (project: Project) => void; onToggleStatus: (id: string) => void; onUpdateLevel: (id: string, field: 'progress' | 'motivation' | 'priority', value: number) => void };
+  TaskDetails: { task: Task; projectId: string };
   Settings: undefined;
   ChangePassword: undefined;
 };
@@ -60,6 +63,13 @@ export const AppNavigator = () => {
             component={ProjectSettings}
             options={{
               title: 'Project Settings',
+            }}
+          />
+          <Stack.Screen
+            name="TaskDetails"
+            component={TaskDetailsPage}
+            options={{
+              title: 'Task Details',
             }}
           />
           <Stack.Screen name="Settings" component={SettingsPage} />

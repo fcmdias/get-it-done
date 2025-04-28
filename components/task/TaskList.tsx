@@ -15,7 +15,7 @@ interface TaskListProps {
 
 export const TaskList = ({ projectId, projectName, onBack, navigation }: TaskListProps) => {
   const { theme } = useTheme();
-  const { tasks, isLoading, addTask, toggleTaskStatus, deleteTask } = useTasks(projectId);
+  const { tasks, isLoading, addTask, toggleTaskStatus } = useTasks(projectId);
   const [newTask, setNewTask] = useState('');
 
   const handleAddTask = async () => {
@@ -60,10 +60,10 @@ export const TaskList = ({ projectId, projectName, onBack, navigation }: TaskLis
         </Text>
       </View>
       <TouchableOpacity
-        onPress={() => deleteTask(item.id)}
-        style={styles.deleteButton}
+        onPress={() => navigation.navigate('TaskDetails', { task: item, projectId })}
+        style={styles.infoButton}
       >
-        <Ionicons name="trash-outline" size={20} color={theme.danger} />
+        <Ionicons name="information-circle-outline" size={24} color={theme.primary} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
-  deleteButton: {
+  infoButton: {
     padding: 8,
   },
 }); 

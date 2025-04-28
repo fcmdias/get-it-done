@@ -2,7 +2,11 @@ export interface Task {
   id: string;
   name: string;
   isCompleted: boolean;
-  createdAt: string;
+  priority: number;
+  dueDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  ownerId: string;
 }
 
 export interface TaskWithAnimation extends Task {
